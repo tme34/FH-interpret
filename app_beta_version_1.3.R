@@ -549,7 +549,7 @@ server <- function(input, output, session) {
     #Definere transcript navn for varianten.
     t_name <- df$transcript[df$alph_variant==variant & !is.na(df$alph_variant==variant)]
     if (is.na(t_name)) {
-      t_name <- df$alph_variant[df$alph_variant==variant & !is.na(df$alph_variant==variant)]
+      t_name <- df$variant[df$alph_variant==variant & !is.na(df$alph_variant==variant)]
     }
     #Definere variant allele count variabel.
     ac <- df$ac[df$alph_variant==variant & !is.na(df$alph_variant==variant)]
@@ -810,5 +810,6 @@ output$interpretOut <- renderText({
 
 
 }
+
 
 shinyApp(ui = ui, server = server)
