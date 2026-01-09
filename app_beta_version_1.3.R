@@ -15,6 +15,46 @@ data_list = list(LDLR, PCSK9, APOB)
 
 ui <- fluidPage(
   
+  tags$head(
+    tags$style(HTML("
+      /* 1. Unselected State */
+      .btn-default {
+        background-color: #f8f9fa !important;
+        border-color: #ddd !important;
+        color: #444 !important;
+        
+        /* INCREASED SPACING HERE */
+        margin-right: 10px !important;  /* Horizontal gap */
+        margin-bottom: 10px !important; /* Vertical gap if they wrap */
+        
+        border-radius: 8px !important;
+        padding: 12px 24px !important;
+        transition: all 0.2s ease-in-out !important;
+        border-width: 2px !important;
+        
+        font-style: italic !important;
+      }
+
+      /* 2. Selected State */
+      .btn-default.active, .btn-default.active:hover {
+        background-color: #4A90E2 !important;
+        border-color: #357ABD !important;
+        color: white !important;
+      }
+      
+      /* 3. Hover effect */
+      .btn-default:hover {
+        background-color: #e2e6ea !important;
+      }
+
+      /* Fix for spacing inside the button container */
+      .btn-group-container-sw {
+        display: flex;
+        flex-wrap: wrap; /* Allows buttons to flow to next line if needed */
+      }
+    "))
+  ),
+  
   # 1. Add a title
   titlePanel("Familial hypercholesterolemia web-app"),
   
@@ -24,24 +64,15 @@ ui <- fluidPage(
     sidebarPanel(
       width = 3,
       h3("FH gene browser"),
-      shiny::selectInput(
+      shinyWidgets::radioGroupButtons
+      (
         inputId = "dataset_choice",
         label = "Choose gene",
         choices = c("LDLR" = 1,"PCSK9" = 2, "APOB"= 3),
-        selected = "LDLR"
+        selected = 1,
+        individual = T,
+        status = "default"
       ),
-      # Checkbox input to control which columns are displayed
-      checkboxInput(inputId = "filter_vars_hgvs",
-                    label = "Only annotated variants",
-                    value = T), # Default to T
-      # Checkbox input to control which columns are displayed
-      checkboxInput(inputId = "filter_vars_est",
-                    label = "Only variants present in the UK Biobank",
-                    value = T), # Default to T
-      # Checkbox input to control which columns are displayed
-      checkboxInput(inputId = "show_unadj_est",
-                    label = "Add unadjusted LDL-estimates",
-                    value = F), # Default to F
       
       h3("\nGraph appearance"),
       
@@ -75,15 +106,15 @@ ui <- fluidPage(
       ),
       
       nav_panel("documentation", 
-                h5("The app contains data for use in classifying variants in the LDLR , APOB , and PCSK9 genes . For the selected variant, the app generates a draft interpretation text. The app describes the available evidence but does not make suggestions for the final classification. The following data is included:"),
+                h5("The app contains data for use in classifying variants in the LDLR, APOB, and PCSK9 genes. For the selected variant, the app generates a draft interpretation text. The app describes the available evidence but does not make suggestions for the final classification. The following data is included:"),
                 h4(HTML("The Genome Aggregation Database, <a href='https://gnomad.broadinstitute.org/' target='_blank'>gnomAD</a>:")),
                 h5("A database of publicly available aggregate data from large exome and genome sequencing projects from around the world. The interpretation text presents the total allele frequency for the selected variant in the approximately 1.6 million sequenced alleles currently available in gnomAD (v4.1.0). There is also a hyperlink to allele frequencies stratified by ethnicity for the selected variant (click on 'gnomAD')."),
                 h4("UK Biobank:"),
-                h5("UK Biobank is a large cohort of individuals from the British population. The app contains UK Biobank data for variants in the coding regions of the genes LDLR , APOB , and PCSK9 and their association with statin-adjusted plasma LDL-C in approximately 470,000 UK Biobank participants. The number of non-carriers, heterozygotes, and homozygotes, as well as the mean LDL-C concentration and standard deviation for each genotype are described in the interpretation text. The effects on LDL-C are also presented graphically (mean +/-95% confidence interval) in the app itself.  Participants on statins have had their measured LDL-C multiplied by 1.42 to correct for the statin-induced reduction in LDL-C of an average of 30%. Statistical testing for differences in LDL-C between genotypes is via linear regression adjusted for sex, age, and ethnicity (principal genetic components 1-10). These analyses were conducted under UK Biobank Application Number: 104807."),
+                h5("UK Biobank is a large cohort of individuals from the British population. The app contains UK Biobank data for variants in the coding regions of the genes LDLR, APOB, and PCSK9 and their association with statin-adjusted plasma LDL-C in approximately 470,000 UK Biobank participants. The number of alleles and heterozygotes (but not homozygotes) as well as the mean LDL-C concentration for each genotype are described in the interpretation text. The effects on LDL-C are also presented graphically (mean +/-95% confidence interval) in the app itself.  Participants on statins have had their measured LDL-C multiplied by 1.42 to correct for the statin-induced reduction in LDL-C of an average of 30%. Statistical testing for differences in LDL-C between genotypes is via linear regression adjusted for sex, age, and ethnicity (principal genetic components 1-10). These analyses were conducted under UK Biobank Application Number: 104807."),
                 h4(HTML("Global Lipids Genetics Consortium (GLGC) exome chip GWAS meta-analyse from 2017 (PMID: <a href='https://pubmed.ncbi.nlm.nih.gov/29083408/' target='_blank'>29083408</a>):")),
                 h5("Per-allele effects on LDL-C in approximately 300,000 individuals from 73 different cohorts. The UK Biobank was not included in the meta-analysis, so these data can be considered independent. Only a small group of variants in LDLR , APOB and PCSK9 were measured in this GWAS. For the variants that were not measured, the statement regarding these data is omitted in the app's interpretation text."),
                 h4("AlphaMissense:"),
-                h5(HTML("AlphaMissense is an AI tool developed by Google Deepmind that predicts the harmfulness of missense (PMID: <a href='https://pubmed.ncbi.nlm.nih.gov/37733863/' target='_blank'>37733863</a>). AlphaMissense is based on AlphaFold's ability to predict protein structures, as well as evidence for how rarely variation in a specific amino acid occurs across humans and primates; changes in amino acids that show little or no variation are more likely to be harmful. AlphaMissense harmfulness is expressed as a value from 0 (benign) to 1 (pathogenic), with recommended cutoff values: <0.34: benign, 0.34-0.56: uncertain; >0.56: likely pathogenic. The closer to 0 or 1, respectively, the more certain the prediction.")),
+                h5(HTML("AlphaMissense is an AI tool developed by Google Deepmind that predicts the harmfulness of missense variants (PMID: <a href='https://pubmed.ncbi.nlm.nih.gov/37733863/' target='_blank'>37733863</a>). AlphaMissense is based on AlphaFold's ability to predict protein structures, as well as evidence for how rarely variation in a specific amino acid occurs across humans and primates; changes in amino acids that show little or no variation are more likely to be harmful. AlphaMissense harmfulness is expressed as a value from 0 (benign) to 1 (pathogenic), with recommended cutoff values: <0.34: benign, 0.34-0.56: uncertain; >0.56: likely pathogenic. The closer to 0 or 1, respectively, the more certain the prediction.")),
                 h4(HTML("Human Gene Mutation Database (<a href='https://www.hgmd.cf.ac.uk/ac/index.php' target='_blank'>HGMD</a>):")),
                 h5("Is a curated database of genetic variants in disease-associated genes. For each variant, there is information about which articles the variant has appeared in, which phenotype it associates with, and the overall classification of the variant. The app includes data on all missense, nonsense and splice variants in LDLR, APOB, and PCSK9 that have been strongly associated with familial hypercholesterolemia (Variant Class 'DM', red box in HGMD). Latest extract: December 2025. For the selected variant, the PMIDs of articles referencing the variant are included as evidence in the interpretation text. For variants with more than 4 articles, 4 are mentioned, followed by 'and x other references'."),
                 h4(HTML("<a href='https://www.ncbi.nlm.nih.gov/clinvar/' target='_blank' >ClinVar</a>:")),
@@ -91,7 +122,7 @@ ui <- fluidPage(
                 h4("Other missense variants at the same amino acid position:"),
                 h5("If another missense variant at the same amino acid position as the patient's variant is known to cause FH, this counts as moderate evidence of pathogenicity (ACMG criterion PM5). The app reports if other missense variants at the same position have been strongly associated with FH in HGMD (variant class 'DM') or in ClinVar (likely pathogenic or pathogenic)."),
                 h4("Effect on LDL uptake and LDLR transport to the cell surface:"),
-                h5(HTML("In a study from 2025, The functional consequence of 17,000 different missense variants (nearly all theoretically possible) in LDLR were investigated (PMID: 41166440). The variants were generated one at a time using CRISPR/CAS9 on modified HeLa cells. Each cell line with a specific mutation was then examined for cellular uptake of LDL-C (two different assays, one without and one with the presence of VLDL) and for transport of the LDLR receptor to the cell surface. The function was quantified for each assay on a scale from 0 (no function) to 1 (normal, wild-type function). For each of the three assays, a score <0.5 is interpreted as impaired function. The app's interpretation text describes the overall result of these assays for the selected variant. Please note that the interpretation text only relates to data from this new study. Thus, older functional data that is not described in the app may exist for a given variant (such data may be identified through manual lookup in HGMD or ClinVar, which can be done using the links in the interpretation text).")),
+                h5(HTML("In a study from 2025, the functional consequence of 17,000 different missense variants (nearly all theoretically possible) in LDLR were investigated (PMID: <a href='https://pubmed.ncbi.nlm.nih.gov/41166440/' target='_blank'>41166440</a>). The variants were generated one at a time using CRISPR/CAS9 on modified HeLa cells. Each cell line with a specific mutation was then examined for cellular uptake of LDL-C (two different assays, one without and one with the presence of VLDL) and for transport of the LDLR receptor to the cell surface. The function was quantified for each assay on a scale from 0 (no function) to 1 (normal, wild-type function). For each of the three assays, a score <0.5 is interpreted as impaired function. The app's interpretation text describes the overall result of these assays for the selected variant. Please note that the interpretation text only relates to data from this new study. Thus, older functional data that is not described in the app may exist for a given variant (such data may be identified through manual lookup in HGMD or ClinVar, which can be done using the links in the interpretation text).")),
                 h5(HTML("The app is developed and maintained by MD, PhD <a href='https://scholar.google.com/citations?user=0zcd41YAAAAJ&hl=en&oi=ao/' target='_blank'>Helene Gellert-Kristensen</a>, cand. scient. <a href='https://scholar.google.com/citations?user=4H5xhzgAAAAJ&hl=en&oi=ao/' target='_blank'>Tim Møller Eyrich</a>, and MD, associate professor, PhD <a href='https://scholar.google.com/citations?user=mtgbiKoAAAAJ&hl=en&oi=ao/' target='_blank'>Stefan Stender</a>, all from the Department of Clinical Biochemistry at Rigshospitalet, Denmark. Contact: <a href='mailto:stefan.stender@regionh.dk'>stefan.stender@regionh.dk</a>"))
                 )
       
@@ -109,18 +140,6 @@ server <- function(input, output, session) {
     
     selected_data<-data_list[[as.numeric(input$dataset_choice)]]
     
-    if (input$filter_vars_hgvs) {
-      selected_data <- selected_data[!is.na(selected_data$HGVS),]
-    }
-    
-    #if (input$filter_vars_est) {
-      #selected_data <- selected_data[!is.na(selected_data$n0),]
-    #}
-    
-    if (input$show_unadj_est != T) {
-      selected_data <- dplyr::select(selected_data, -c(mean_ldl_0, se_ldl_0, mean_ldl_1, se_ldl_1, mean_ldl_2, se_ldl_2, 
-                                                       diff_1, diff_2, beta_genotype, se_beta, p_value))    # or however your column is defined
-    }
     selected_data
   })
   
@@ -686,7 +705,7 @@ server <- function(input, output, session) {
       } else if (germ_class=="Benign/Likely benign") {
         clin_desc <- paste("In <a href='https://www.ncbi.nlm.nih.gov/clinvar/variation/",var_id,"/' target='_blank'>","ClinVar</a>, the variant is classified as benign / likely benign.", sep="")
       } else if (germ_class=="Conflicting classifications of pathogenicity") {
-        clin_desc <- paste("The variant is reported with conflicting evidence of pathogenecity in <a href='https://www.ncbi.nlm.nih.gov/clinvar/variation/",var_id,"/' target='_blank'>","ClinVar</a>.", sep="")
+        clin_desc <- paste("The variant is reported with conflicting evidence of pathogenicity in <a href='https://www.ncbi.nlm.nih.gov/clinvar/variation/",var_id,"/' target='_blank'>","ClinVar</a>.", sep="")
       } else if (germ_class=="Likely benign") {
         clin_desc <- paste("In <a href='https://www.ncbi.nlm.nih.gov/clinvar/variation/",var_id,"/' target='_blank'>","ClinVar</a>, the variant is classified as likely benign.", sep="")
       } else if (germ_class=="Likely pathogenic") {
