@@ -597,9 +597,9 @@ server <- function(input, output, session) {
         functional_statement <- ""
       } else {
         if (s2 > 0.5) {
-          functional_statement <- "Functional studies have demonstrated an effect of the variant on the transport of LDLR to the cell surface. (PMID: 41166440)."
+          functional_statement <- "Functional studies have demonstrated an effect of the variant on LDLR cell-surface abundance. (PMID: 41166440)."
         } else {
-          functional_statement <- "Functional studies have not demonstrated an effect of the variant on the transport of LDLR to the cell surface. (PMID: 41166440)."
+          functional_statement <- "Functional studies have not demonstrated an effect of the variant on LDLR cell-surface abundance. (PMID: 41166440)."
         }
       }
     } else {
@@ -609,13 +609,13 @@ server <- function(input, output, session) {
         functional_statement <- "Functional studies have not demonstrated an effect of the variant on LDL uptake (PMID: 41166440)."
       } else if (!is.na(s1) & !is.na(s2) | !is.na(s3) & !is.na(s2) ) {
         functional_statement <- if (s1 < 0.5 & s2 < 0.5 & !is.na(s1) & !is.na(s2) | s3 < 0.5 & s2 < 0.5 & !is.na(s3) & !is.na(s2)) { 
-          "Functional studies have demonstrated an effect of the variant on LDL uptake and on transport of LDLR to the cell surface (PMID: 41166440)."
+          "Functional studies have demonstrated an effect of the variant on LDL uptake and on LDLR cell-surface abundance (PMID: 41166440)."
         } else if (s1 > 0.5 & s2 > 0.5 & !is.na(s1) & !is.na(s2) | s3 > 0.5 & s2 > 0.5 & !is.na(s3) & !is.na(s2)) {
-          "Functional studies have not demonstrated an effect of the variant on LDL uptake or the transport of LDLR to the cell surface (PMID: 41166440)."
+          "Functional studies have not demonstrated an effect of the variant on LDL uptake or LDLR cell-surface abundance (PMID: 41166440)."
         } else if (s1 < 0.5 & s2 > 0.5 & !is.na(s1) & !is.na(s2) | s3 < 0.5 & s2 > 0.5 & !is.na(s3) & !is.na(s2)) {
           "Functional studies have demonstrated an effect of the variant on LDL uptake (PMID: 41166440)."
         } else if (s1 > 0.5 & s2 < 0.5 & !is.na(s1) & !is.na(s2) | s3 > 0.5 & s2 < 0.5 & !is.na(s3) & !is.na(s2)) {
-          "Functional studies have demonstrated an effect of the variant on the transport of LDLR to the cell surface (PMID: 41166440)."
+          "Functional studies have demonstrated an effect of the variant on LDLR cell-surface abundance (PMID: 41166440)."
         } else {
           ""
         }
@@ -810,6 +810,5 @@ output$interpretOut <- renderText({
 
 
 }
-
 
 shinyApp(ui = ui, server = server)
