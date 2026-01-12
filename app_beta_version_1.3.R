@@ -502,8 +502,8 @@ server <- function(input, output, session) {
     n <- ifelse(is.na(n),0,n)
     n_prox <- n
     #Definere Statin-justerede ldl værdier for vildtype og bærere for varianten.
-    ldl_adj_wt<-round(df$mean_ldl_0_adj[df$alph_variant==variant & !is.na(df$alph_variant==variant)],2)
-    ldl_adj_carrier<-round(df$mean_ldl_1_adj[df$alph_variant==variant & !is.na(df$alph_variant==variant)],2)
+    ldl_adj_wt <- format(round(df$mean_ldl_0_adj[df$alph_variant==variant & !is.na(df$alph_variant==variant)],2), nsmall=2)
+    ldl_adj_carrier <- format(round(df$mean_ldl_1_adj[df$alph_variant==variant & !is.na(df$alph_variant==variant)],2), nsmall=2)
     #Definere forskellen mellem de 2 ldl variable.
     diff <- round(df$diff_1_adj[df$alph_variant==variant & !is.na(df$alph_variant==variant)],2)
     #Definere p-værdi for forskellen mellem bærere og vildtype.
