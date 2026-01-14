@@ -3,7 +3,7 @@
 [![Preprint](https://img.shields.io/badge/medRxiv-10.64898%2F2026.01.10.26343831-red)](https://doi.org/10.64898/2026.01.10.26343831)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**FH-interpret** is a web-based platform designed to automate the description of evidence for the clinical interpretation of variants in *LDLR*, *APOB*, and *PCSK9* to facilitate the diagnosis of Familial Hypercholesterolemia (FH).
+**FH-interpret** is a web-based platform designed to automate the description of evidence for the clinical interpretation of variants in *LDLR*, *APOB*, and *PCSK9* used in FH (Familial Hypercholesterolemia) diagnosis.
 
 <h3>This Github Repository includes databases used by the app (/data) and the Shiny application script itself.</h3>
 Latest update: 08-01-2026
@@ -36,6 +36,7 @@ If another missense variant at the same amino acid position as the patient's var
 In a study from 2025, the functional consequence of 17,000 different missense variants (nearly all theoretically possible) in LDLR were investigated (PMID: <a href='https://pubmed.ncbi.nlm.nih.gov/41166440/' target='_blank'>41166440</a>). The variants were generated one at a time using CRISPR/CAS9 on modified HeLa cells. Each cell line with a specific mutation was then examined for cellular uptake of LDL-C (two different assays, one without and one with the presence of VLDL) and for transport of the LDLR receptor to the cell surface. The function was quantified for each assay on a scale from 0 (no function) to 1 (normal, wild-type function). For each of the three assays, a score <0.5 is interpreted as impaired function. The app's interpretation text describes the overall result of these assays for the selected variant. Please note that the interpretation text only relates to data from this new study. Thus, older functional data that is not described in the app may exist for a given variant (such data may be identified through manual lookup in HGMD or ClinVar, which can be done using the links in the interpretation text).
 
 <h4>The app is developed and maintained by MD, PhD <a href='https://scholar.google.com/citations?user=0zcd41YAAAAJ&hl=en&oi=ao/' target='_blank'>Helene Gellert-Kristensen</a>, cand. scient. <a href='https://scholar.google.com/citations?user=4H5xhzgAAAAJ&hl=en&oi=ao/' target='_blank'>Tim Møller Eyrich</a>, and MD, associate professor, PhD <a href='https://scholar.google.com/citations?user=mtgbiKoAAAAJ&hl=en&oi=ao/' target='_blank'>Stefan Stender</a>, all from the Department of Clinical Biochemistry at Rigshospitalet, Denmark. Contact: <a href='mailto:stefan.stender@regionh.dk'>stefan.stender@regionh.dk</a></h4>
+
 
 
 
