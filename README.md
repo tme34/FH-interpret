@@ -6,7 +6,7 @@
 **FH-interpret** is a web-based platform designed to automate the description of evidence for the clinical interpretation of variants in *LDLR*, *APOB*, and *PCSK9* used in FH (Familial Hypercholesterolemia) diagnosis.
 
 <h3>This Github Repository includes databases used by the app (/data) and the Shiny application script itself.</h3>
-Latest update: 08-01-2026
+Latest update: 13-07-2026
 
 <h1>Documentation</h1>
 The app contains data for use in classifying variants in the LDLR, APOB, and PCSK9 genes. For the selected variant, the app generates a draft interpretation text. The app describes the available evidence but does not make suggestions for the final classification. The following data is included:
