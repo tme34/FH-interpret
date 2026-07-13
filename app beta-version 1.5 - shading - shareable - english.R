@@ -3,15 +3,16 @@ library(plotly)
 library(data.table)
 library(tidyverse)
 library(bslib)
+library(readxl)
 
 
 #Datasets
-LDLR<-data.table::fread("data/LDLR_all_df_share.csv")
-PCSK9<-data.table::fread("data/PCSK9_all_df_share.csv")
-APOB<-data.table::fread("data/APOB_all_df_share.csv")
+LDLR<-data.table::fread("data/LDLR_all_df_share_v8.csv")
+PCSK9<-data.table::fread("data/PCSK9_all_df_share_v8.csv")
+APOB<-data.table::fread("data/APOB_all_df_share_v8.csv")
 
+cys_pm1 <- readxl::read_excel("data/cys_pm1.xlsx")
 data_list = list(LDLR, PCSK9, APOB)
-
 
 ui <- fluidPage(
   
@@ -78,7 +79,7 @@ ui <- fluidPage(
       
       numericInput(inputId = "red_line",
                   label = "Elevation of red line above wild-type mean",
-                  value = 0.50,
+                  value = 0,
                   min = 0,
                   max = 3),
       
@@ -88,7 +89,7 @@ ui <- fluidPage(
       
       checkboxInput(inputId = "show_percentile",
                     label = "Add statin-adjusted LDL percentiles for the population",
-                    value = F), # Default to F
+                    value = T), # Default to F
       
     ),
     
@@ -123,15 +124,15 @@ ui <- fluidPage(
                 h5("If another missense variant at the same amino acid position as the patient's variant is known to cause FH, this counts as moderate evidence of pathogenicity (ACMG criterion PM5). The app reports if other missense variants at the same position have been strongly associated with FH in HGMD (variant class 'DM') or in ClinVar (likely pathogenic or pathogenic)."),
                 h4("Effect on LDL uptake and LDLR abundance on the cell surface:"),
                 h5(HTML("In a study from 2025, the functional consequence of 17,000 different missense variants (nearly all theoretically possible) in LDLR were investigated (PMID: <a href='https://pubmed.ncbi.nlm.nih.gov/41166440/' target='_blank'>41166440</a>). The variants were generated one at a time using CRISPR/CAS9 on modified HeLa cells. Each cell line with a specific mutation was then examined for cellular uptake of LDL-C (two different assays, one without and one with the presence of VLDL) and for abundance of the LDLR receptor on the cell surface. The function was quantified for each assay on a scale from 0 (no function) to 1 (normal, wild-type function). For each of the three assays, a score <0.5 is interpreted as impaired function. The app's interpretation text describes the overall result of these assays for the selected variant. Please note that the interpretation text only relates to data from this new study. Thus, older functional data that is not described in the app may exist for a given variant (such data may be identified through manual lookup in HGMD or ClinVar, which can be done using the links in the interpretation text).")),
-                h5(HTML("The app is developed and maintained by MD, PhD <a href='https://scholar.google.com/citations?user=0zcd41YAAAAJ&hl=en&oi=ao/' target='_blank'>Helene Gellert-Kristensen</a>, cand. scient. <a href='https://scholar.google.com/citations?user=4H5xhzgAAAAJ&hl=en&oi=ao/' target='_blank'>Tim Møller Eyrich</a>, and MD, associate professor, PhD <a href='https://scholar.google.com/citations?user=mtgbiKoAAAAJ&hl=en&oi=ao/' target='_blank'>Stefan Stender</a>, all from the Department of Clinical Biochemistry at Rigshospitalet, Denmark. Contact: <a href='mailto:stefan.stender@regionh.dk'>stefan.stender@regionh.dk</a>"))
-                )
+                h5(HTML("The app is developed and maintained by MD, PhD <a href='https://scholar.google.com/citations?user=0zcd41YAAAAJ&hl=en&oi=ao/' target='_blank'>Helene Gellert-Kristensen</a>, cand. scient. <a href='https://scholar.google.com/citations?user=4H5xhzgAAAAJ&hl=en&oi=ao/' target='_blank'>Tim Møller Eyrich</a>, and MD, associate professor, PhD <a href='https://scholar.google.com/citations?user=mtgbiKoAAAAJ&hl=en&oi=ao/' target='_blank'>Stefan Stender</a>, all from the Department of Clinical Biochemistry at Rigshospitalet, Denmark. Contact: <a href='mailto:stefan.stender@regionh.dk'>stefan.stender@regionh.dk</a>")),
+                h5(HTML("Last updated 02-07-2026"))
       
       )
       
     )
   )
 )
-
+)
 
 server <- function(input, output, session) {
   
@@ -150,7 +151,7 @@ server <- function(input, output, session) {
     # Check if a row is selected; otherwise, return NULL or the first row as a default
     if (length(selected_index) == 0) {
       # Return the first row as a default selection if none is selected
-      return(selected_dataset()[1, ])
+      return(NULL)
     } else {
       selected_dataset()[as.numeric(selected_index), ]
     }
@@ -235,7 +236,13 @@ server <- function(input, output, session) {
       "se_s3",                  # Score Tool 3 Standard Error
       
       # 7. Alpha missense pathogenicity
-      "am_pathogenicity"
+      "am_pathogenicity",
+      "revel_score",
+      "DS_AG",
+      "DS_AL",
+      "DS_DG",
+      "DS_DL"
+      
       
     )
     
@@ -282,9 +289,9 @@ server <- function(input, output, session) {
       
       # 5. External GWAS Results
       "RS ID",
-      "External Beta Effect",
-      "External SE",
-      "External P Value",
+      "GLGC Beta Effect",
+      "GLGC SE",
+      "GLGC P Value",
       
       # 6. Supplementary Scores
       "LDL Uptake Score",
@@ -295,7 +302,12 @@ server <- function(input, output, session) {
       "LDL Uptake in the Presence of VLDL Score SE",
       
       # 7. alpha missense pathogenecity score
-      "Alphamissense Pathogenicity"
+      "Alphamissense Pathogenicity",
+      "Revel Score",
+      "SpliceAI-score: Acceptor Gain",
+      "SpliceAI-score: Acceptor Loss",
+      "SpliceAI-score: Donor Gain",
+      "SpliceAI-score: Donor Loss"
     )
     
     # --- 2. APPLY CLEANUP LOGIC ---
@@ -322,7 +334,7 @@ server <- function(input, output, session) {
     
     
     DT::datatable(cleaned_data, 
-                                                 selection = "single",
+                                                 selection = list(mode="single", selected = 1),
                                                  options = list(
                                                    pageLength = 10, 
                                                    scrollX = TRUE,
@@ -353,7 +365,7 @@ server <- function(input, output, session) {
   
   
   output$graphOut <- renderPlot({
-    
+    req(selected_row_data())
     # Get the filtered data
     plot_data <- selected_row_data()
     
@@ -450,7 +462,7 @@ server <- function(input, output, session) {
   
   interpretText<- reactive({
     
-
+    req(selected_row_data())
     variant  <- selected_row_data()$alph_variant
     
     #Definere chromosome ud fra variant navn
@@ -484,12 +496,7 @@ server <- function(input, output, session) {
     if (gen == "APOB") {
       am <- ""
     }
-    #am variablen skiftes til en string alt efter om scoren er over 0.564 (high pathogenicity).
-    if (am>0.564 & am!="NA") {
-      am <- paste("AlphaMissense predicts that the variant is deleterious (score: ",am,").", sep = "")
-    } else {
-      am <- ""
-    }
+
     #hgvs variablen defineres og sættes som string hvis den eksisterer (ellers empty string).
     hgvs<-ifelse(is.na(df$HGVS[df$alph_variant==variant & !is.na(df$alph_variant==variant)]),"NA",df$HGVS[df$alph_variant==variant & !is.na(df$alph_variant==variant)])
     hgvs<- ifelse(hgvs=="NA","",paste(", ",hgvs, sep=""))
@@ -498,7 +505,7 @@ server <- function(input, output, session) {
     het <- ifelse(is.na(het),"0",het)
     het_prox <- het
     #Definere total antal i UKbiobank med data på varianten.
-    n <- df$ntotal[df$alph_variant==variant & !is.na(df$alph_variant==variant)]
+    n <- df$n0[df$alph_variant==variant & !is.na(df$alph_variant==variant)]
     n <- ifelse(is.na(n),0,n)
     n_prox <- n
     #Definere Statin-justerede ldl værdier for vildtype og bærere for varianten.
@@ -574,16 +581,14 @@ server <- function(input, output, session) {
       ukb <- ""
     } else { 
       
-      if (is.na(ldl_adj_carrier)) {
+      if (is.na(ldl_adj_carrier)|ldl_adj_carrier=="NA") {
         het <- format(het, big.mark = ".", decimal.mark = ",", scientific = FALSE, trim = TRUE)
-        n <- format(n, big.mark = ".", decimal.mark = ",", scientific = FALSE, trim = TRUE)
         
         ukb <- glue::glue ("In UK Biobank there are {het} heterozygotes out of ~470.000 participants.
       There are no LDL measurements for this variant in UK Biobank.")   
         
       } else {
         het <- format(het, big.mark = ".", decimal.mark = ",", scientific = FALSE, trim = TRUE)
-        n <- format(n, big.mark = ".", decimal.mark = ",", scientific = FALSE, trim = TRUE)
         ukb <- glue::glue(
           "In UK Biobank, there are {het} heterozygotes out of ~470.000 participants. These {het} heterozygotes have on average {diff} mmol/L {plus_minus} statin-adjusted LDL-C than non-carriers ({ldl_adj_carrier} vs {ldl_adj_wt} mmol/L, p = {p})."
         )
@@ -597,25 +602,25 @@ server <- function(input, output, session) {
         functional_statement <- ""
       } else {
         if (s2 > 0.5) {
-          functional_statement <- "Functional studies have demonstrated an effect of the variant on LDLR cell-surface abundance. (PMID: 41166440)."
+          functional_statement <- "Functional studies have demonstrated an effect of the variant on LDLR cell-surface abundance. (PMID: <a href='https://www.science.org/doi/10.1126/science.ady7186#supplementary-materials' target='_blank'>41166440</a>)."
         } else {
-          functional_statement <- "Functional studies have not demonstrated an effect of the variant on LDLR cell-surface abundance. (PMID: 41166440)."
+          functional_statement <- "Functional studies have not demonstrated an effect of the variant on LDLR cell-surface abundance. (PMID: <a href='https://www.science.org/doi/10.1126/science.ady7186#supplementary-materials' target='_blank'>41166440</a>)."
         }
       }
     } else {
       if (s1 < 0.5 & is.na(s2)| isTRUE(s3 < 0.5) & is.na(s2)) {
-        functional_statement <- "Functional studies have demonstrated an effect of the variant on LDL uptake (PMID: 41166440)."
+        functional_statement <- "Functional studies have demonstrated an effect of the variant on LDL uptake (PMID: <a href='https://www.science.org/doi/10.1126/science.ady7186#supplementary-materials' target='_blank'>41166440</a>)."
       } else if (s1 > 0.5 & is.na(s2) | isTRUE(s3 > 0.5) & is.na(s2))  {
-        functional_statement <- "Functional studies have not demonstrated an effect of the variant on LDL uptake (PMID: 41166440)."
+        functional_statement <- "Functional studies have not demonstrated an effect of the variant on LDL uptake (PMID: <a href='https://www.science.org/doi/10.1126/science.ady7186#supplementary-materials' target='_blank'>41166440</a>)."
       } else if (!is.na(s1) & !is.na(s2) | !is.na(s3) & !is.na(s2) ) {
         functional_statement <- if (s1 < 0.5 & s2 < 0.5 & !is.na(s1) & !is.na(s2) | s3 < 0.5 & s2 < 0.5 & !is.na(s3) & !is.na(s2)) { 
-          "Functional studies have demonstrated an effect of the variant on LDL uptake and on LDLR cell-surface abundance (PMID: 41166440)."
+          "Functional studies have demonstrated an effect of the variant on LDL uptake and on LDLR cell-surface abundance (PMID: <a href='https://www.science.org/doi/10.1126/science.ady7186#supplementary-materials' target='_blank'>41166440</a>)."
         } else if (s1 > 0.5 & s2 > 0.5 & !is.na(s1) & !is.na(s2) | s3 > 0.5 & s2 > 0.5 & !is.na(s3) & !is.na(s2)) {
-          "Functional studies have not demonstrated an effect of the variant on LDL uptake or LDLR cell-surface abundance (PMID: 41166440)."
+          "Functional studies have not demonstrated an effect of the variant on LDL uptake or LDLR cell-surface abundance (PMID: <a href='https://www.science.org/doi/10.1126/science.ady7186#supplementary-materials' target='_blank'>41166440</a>)."
         } else if (s1 < 0.5 & s2 > 0.5 & !is.na(s1) & !is.na(s2) | s3 < 0.5 & s2 > 0.5 & !is.na(s3) & !is.na(s2)) {
-          "Functional studies have demonstrated an effect of the variant on LDL uptake (PMID: 41166440)."
+          "Functional studies have demonstrated an effect of the variant on LDL uptake (PMID: <a href='https://www.science.org/doi/10.1126/science.ady7186#supplementary-materials' target='_blank'>41166440</a>)."
         } else if (s1 > 0.5 & s2 < 0.5 & !is.na(s1) & !is.na(s2) | s3 > 0.5 & s2 < 0.5 & !is.na(s3) & !is.na(s2)) {
-          "Functional studies have demonstrated an effect of the variant on LDLR cell-surface abundance (PMID: 41166440)."
+          "Functional studies have demonstrated an effect of the variant on LDLR cell-surface abundance (PMID: <a href='https://www.science.org/doi/10.1126/science.ady7186#supplementary-materials' target='_blank'>41166440</a>)."
         } else {
           ""
         }
@@ -678,7 +683,7 @@ server <- function(input, output, session) {
                     ", ",
                     df$Ref_URL_4[df$alph_variant==variant & !is.na(df$alph_variant==variant)],
                     " and ",
-                    gsub("andre reference\\(r\\)","more reference\\(s\\)",gsub("\\...$", "", df$Ref_URL_5[df$alph_variant==variant & !is.na(df$alph_variant==variant)])),
+                    gsub("andre reference\\(r\\)|anden reference\\(r\\)","more reference\\(s\\)",gsub("\\...$", "", df$Ref_URL_5[df$alph_variant==variant & !is.na(df$alph_variant==variant)])),
                     ").",
                     sep="")
     }
@@ -792,16 +797,87 @@ server <- function(input, output, session) {
         )}
       else {glgc<-""}
     }
+    print("asd")
+    splice <- ""
+    am_revel <- ""
+    revel_d <- ifelse(!is.na(df$revel_score[df$alph_variant==variant & !is.na(df$alph_variant==variant)]),df$revel_score[df$alph_variant==variant & !is.na(df$alph_variant==variant)], NA)
+    if (!is.na(revel_d) & am!="NA" & gen=="LDLR") {
+      if (revel_d>=0.644 & am>0.564) {
+        revel_d<-format(round(revel_d,2),nsmall=2)
+        am<-format(round(am,2),nsmall=2)
+        am_revel <- glue::glue("\nBoth AlphaMissense and REVEL predicts that the variant is deleterious (score: {am} and {revel_d}, respectively.)")
     
+      }
+    }
+    else if (am!="NA" & gen=="LDLR"){ 
+      if (am>0.564) {
+      am<-format(round(am,2),nsmall=2)
+      am_revel <- glue::glue("\nAlphaMissense predicts that the variant is deleterious (score: {am}).")
+      }
+    }
+    else if (!is.na(revel_d) & gen == "LDLR"){ 
+      if (revel_d>=0.644) {
+        revel_d<-format(round(revel_d,2),nsmall=2)
+        am_revel <- glue::glue("\nREVEL predicts that the variant is deleterious (score: {revel_d}).")
+      }
+    }
+    spliceai_d <- ifelse(!is.na(df$DS_max[df$alph_variant==variant & !is.na(df$alph_variant==variant)]),df$DS_max[df$alph_variant==variant & !is.na(df$alph_variant==variant)], NA)
+    spliceai_max <- ifelse(!is.na(df$DS_max_type[df$alph_variant==variant & !is.na(df$alph_variant==variant)]),df$DS_max_type[df$alph_variant==variant & !is.na(df$alph_variant==variant)], NA)
     
+    if (!is.na(spliceai_d) & gen =="LDLR") {
+      if (spliceai_d>=0.2) {
+        if (spliceai_max=="AG"){
+          type<-"Acceptor Gain."
+        } else if (spliceai_max=="AL"){
+          type <- "Acceptor Loss."
+        } else if (spliceai_max=="DG"){
+          type <- "Donor Gain."
+        } else if (spliceai_max=="DL"){
+          type <- "Donor Loss."
+        }
+        splice <- paste("\nAccording to <a href='https://www.cell.com/cell/fulltext/S0092-8674(18)31629-5'>SpliceAI</a> this variant is predicted to have an impact on splicing due to ", type, sep = "")
+      }
+      
+    }
+    aa_change_nr<-ifelse(!is.na(df$HGVS[df$alph_variant==variant & !is.na(df$alph_variant==variant)]),as.numeric(str_extract(df$HGVS[df$alph_variant==variant & !is.na(df$alph_variant==variant)], "[0-9]+")),0)
+    exon_4<-""
+    if (gen=="LDLR" & df$missense[df$alph_variant==variant & !is.na(df$alph_variant==variant)]==1) {
+      if(!is.na(df$pos[df$alph_variant==variant & !is.na(df$alph_variant==variant)])){
+        if(df$pos[df$alph_variant==variant & !is.na(df$alph_variant==variant)]>=11105220 & df$pos[df$alph_variant==variant & !is.na(df$alph_variant==variant)]<=11105600){
+          exon_4<-"The Variant is missense and in exon 4 AMCG-specific for PM1"
+        }
+      }
+      if (is.na(df$pos[df$alph_variant==variant & !is.na(df$alph_variant==variant)])){
+        if(aa_change_nr>104 & aa_change_nr<233){
+          exon_4<-"The Variant is missense and in exon 4 AMCG-specific for PM1"
+        }
+      }
+      
+    }
+    cys<-str_extract(df$HGVS[df$alph_variant==variant & !is.na(df$alph_variant==variant)], "p\\.Cys[0-9]{1,6}")
+    cys_pm1_text <- ""
+    if (cys %in% cys_pm1$Residue & df$missense[df$alph_variant==variant & !is.na(df$alph_variant==variant)]==1){
+      cys_pm1_text <- "This missense variant is changing an important Cys residue meeting the ACMG-criteria for PM1."
+    }
+    popmax <- ifelse(!is.na(df$popmax[df$alph_variant==variant & !is.na(df$alph_variant==variant)]),df$popmax[df$alph_variant==variant & !is.na(df$alph_variant==variant)],1)
+    popmax_text <- ""
     
+    if(popmax<=0.0002) {
+      popmax_text <- "PopMax MAF is below 0.02%, fulfilling ACMG-specific criteria for PM2 "
+    }
+    pop_enrich <- ifelse(!is.na(df$flag_enriched[df$alph_variant==variant & !is.na(df$alph_variant==variant)]),df$flag_enriched[df$alph_variant==variant & !is.na(df$alph_variant==variant)],"NO")
+    pop_enrich_text <- ""
+    if(pop_enrich=="YES") {
+      nfe<-df$nfe_freq[df$alph_variant==variant & !is.na(df$alph_variant==variant)]
+      ancestry<-df$ancestry_match[df$alph_variant==variant & !is.na(df$alph_variant==variant)]
+      pop_enrich_text <- glue::glue("The variant is significantly more frequent in non-european populations - {ancestry}")
+    }
     #Definere endelig string ved brug af glue pakken, hvor de forskellige definerede variable indsættes.
     text <- glue::glue(
-      "{em(gen)}: {t_name} {gnomad} {ukb} {glgc} {am} {others_desc} {functional_statement} {pmid} {clin_desc}")
+      "{em(gen)}: {t_name} {gnomad} {ukb} {glgc} {am_revel} {splice} {others_desc} {functional_statement} {pmid} {clin_desc}  {exon_4} {cys_pm1_text} {pop_enrich_text}")
     
     text
   })
-  
   
 output$interpretOut <- renderText({
   interpretText()
