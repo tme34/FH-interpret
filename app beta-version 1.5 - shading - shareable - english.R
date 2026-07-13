@@ -12,7 +12,6 @@ PCSK9<-data.table::fread("data/PCSK9_all_df_share_v8.csv")
 APOB<-data.table::fread("data/APOB_all_df_share_v8.csv")
 
 cys_pm1 <- readxl::read_excel("data/cys_pm1.xlsx")
-data_list = list(LDLR, PCSK9, APOB)
 
 ui <- fluidPage(
   
